@@ -10,17 +10,30 @@ from aiohttp import web
 from app.config import config
 from app.handlers import router as handlers_router
 from app.middlewares import setup_middlewares
+from app.services.github_poller import GitHubPoller
+from app.services.notifications import send_notification
 from app.webhooks import setup_webhooks
 
 
+async def on_github_event(event_type: str, event: dict, bot: Bot) -> None:
+    await send_notification(bot, event_type, event)
+
+
 async def on_startup(bot: Bot) -> None:
-    await bot.set_webhook(
-        url=config.webhook_url,
-        drop_pending_updates=True,
-    )
+    if config.webhook_url:
+        await bot.set_webhook(
+            url=config.webhook_url,
+            drop_pending_updates=True,
+        )
+    poller = GitHubPoller(bot, lambda et, ev: on_github_event(et, ev, bot))
+    await poller.start()
+    bot["github_poller"] = poller
 
 
 async def on_shutdown(bot: Bot) -> None:
+    poller = bot.get("github_poller")
+    if poller:
+        await poller.stop()
     await bot.delete_webhook()
 
 

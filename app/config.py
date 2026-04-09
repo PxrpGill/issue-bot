@@ -9,6 +9,18 @@ class Settings(BaseSettings):
     port: int = 8080
     secret_token: str = ""
 
+    github_app_id: int = 0
+    github_app_private_key: str = ""
+    github_webhook_secret: str = ""
+    github_installation_id: int = 0
+
+    github_owner: str = ""
+    github_repo: str = ""
+
+    telegram_chat_id: int = 0
+
+    polling_interval: int = 60
+
     class Config:
         env_file = ".env"
         extra = "ignore"
